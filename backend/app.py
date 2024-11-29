@@ -57,5 +57,58 @@ def delete_user(id):
     conn.commit()
     return jsonify({"message": "User deleted successfully"}), 200
 
+
+# Produto
+
+# PRODUTOS
+@app.route("/produtos", methods=["POST"])
+def add_produto():
+    data = request.json
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO produtos(nome,marca,valor)
+    VALUES(%s,%s,%s)
+    """, (data["nome"], data["marca"], data["valor"]))
+    conn.commit()
+    return jsonify({"message": "Product created successfully"}), 201
+
+@app.route("/produtos", methods=["GET"])
+def pegarProdutos():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM produtos")
+    products = cursor.fetchall()
+    return jsonify(products), 200
+
+
+
+#Trabalhando com uma procedure
+
+@app.route("/produtos/procedure", methods=["POST"])
+def add_produto_procedure():
+    data = request.json  # Dados enviados no corpo da requisição
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Chamada para a procedure
+        cursor.execute("""
+        CALL InsertProduto(%s, %s, %s)
+        """, (data["nome"], data["marca"], data["valor"]))
+
+        conn.commit()
+        return jsonify({"message": "Product created successfully via procedure"}), 201
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({"error": "Failed to insert product"}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 if __name__ == '__main__':
     app.run(debug=True)
